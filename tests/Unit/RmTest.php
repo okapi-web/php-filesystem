@@ -6,13 +6,16 @@ use Okapi\Filesystem\Exception\DirectoryNotEmptyException;
 use Okapi\Filesystem\Exception\FileOrDirectoryNotWritableException;
 use Okapi\Filesystem\Exception\FileOrDirectoryNotFoundException;
 use Okapi\Filesystem\Filesystem;
-use Okapi\Filesystem\Tests\DeleteTmpAfterEachTest;
+use Okapi\Filesystem\Tests\DeleteTmpAfterEachTestTrait;
+use PHPUnit\Framework\TestCase;
 
-class RmTest extends DeleteTmpAfterEachTest
+class RmTest extends TestCase
 {
+    use DeleteTmpAfterEachTestTrait;
+
     public function testRmFile(): void
     {
-        $file = self::TMP_DIR . '/test.txt';
+        $file = $this->tmpDir . '/test.txt';
         $content = 'Hello world!';
 
         $this->assertFileDoesNotExist($file);
@@ -26,7 +29,7 @@ class RmTest extends DeleteTmpAfterEachTest
 
     public function testRmDir(): void
     {
-        $dir = self::TMP_DIR . '/test';
+        $dir = $this->tmpDir . '/test';
 
         $this->assertDirectoryDoesNotExist($dir);
         Filesystem::mkdir($dir, recursive: true);
@@ -39,7 +42,7 @@ class RmTest extends DeleteTmpAfterEachTest
 
     public function testRmDirNotEmpty(): void
     {
-        $dir = self::TMP_DIR . '/test';
+        $dir = $this->tmpDir . '/test';
 
         $this->assertDirectoryDoesNotExist($dir);
         Filesystem::mkdir($dir, recursive: true);
@@ -55,7 +58,7 @@ class RmTest extends DeleteTmpAfterEachTest
 
     public function testRmDirOnNonExistentDir(): void
     {
-        $dir = self::TMP_DIR . '/test';
+        $dir = $this->tmpDir . '/test';
 
         $this->assertDirectoryDoesNotExist($dir);
 
@@ -65,7 +68,7 @@ class RmTest extends DeleteTmpAfterEachTest
 
     public function testRmDirRecursive(): void
     {
-        $dir = self::TMP_DIR . '/test/recursive';
+        $dir = $this->tmpDir . '/test/recursive';
 
         $this->assertDirectoryDoesNotExist($dir);
         Filesystem::mkdir($dir, recursive: true);
@@ -76,7 +79,7 @@ class RmTest extends DeleteTmpAfterEachTest
 
     public function testRmDirRecursiveOnNonExistentDir(): void
     {
-        $dir = self::TMP_DIR . '/test/recursive';
+        $dir = $this->tmpDir . '/test/recursive';
 
         $this->assertDirectoryDoesNotExist($dir);
 
@@ -86,12 +89,14 @@ class RmTest extends DeleteTmpAfterEachTest
 
     public function testRmDirRecursiveOnNonWritableDir(): void
     {
-        $dir = self::TMP_DIR . '/test/recursive';
+        $dir = $this->tmpDir . '/test/recursive';
 
         $this->assertDirectoryDoesNotExist($dir);
         Filesystem::mkdir($dir, mode: 0400, recursive: true);
-        chmod($dir, 0400);
-        chmod($dir . '/..', 0400);
+
+        if (PHP_OS === 'Linux') {
+            $this->markTestSkipped('For some reason, permissions for directories are not set on Linux.');
+        }
 
         $this->expectException(FileOrDirectoryNotWritableException::class);
         Filesystem::rm($dir, recursive: true);
@@ -99,7 +104,7 @@ class RmTest extends DeleteTmpAfterEachTest
 
     public function testRmDirRecursiveOnNonWritableDirWithForce(): void
     {
-        $dir = self::TMP_DIR . '/test/recursive';
+        $dir = $this->tmpDir . '/test/recursive';
 
         $this->assertDirectoryDoesNotExist($dir);
         Filesystem::mkdir($dir, mode: 0400, recursive: true);

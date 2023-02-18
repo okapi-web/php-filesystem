@@ -2,16 +2,19 @@
 
 namespace Okapi\Filesystem\Tests\Unit;
 
+use Okapi\Filesystem\Exception\FileExistsException;
 use Okapi\Filesystem\Exception\FileOrDirectoryNotFoundException;
-use Okapi\Filesystem\Exception\NotAFileException;
 use Okapi\Filesystem\Filesystem;
-use Okapi\Filesystem\Tests\DeleteTmpAfterEachTest;
+use Okapi\Filesystem\Tests\DeleteTmpAfterEachTestTrait;
+use PHPUnit\Framework\TestCase;
 
-class MkdirTest extends DeleteTmpAfterEachTest
+class MkdirTest extends TestCase
 {
+    use DeleteTmpAfterEachTestTrait;
+
     public function testMkdir(): void
     {
-        $path = self::TMP_DIR . '/test';
+        $path = $this->tmpDir . '/test';
 
         $this->assertDirectoryDoesNotExist($path);
         Filesystem::mkdir($path, recursive: true);
@@ -20,7 +23,7 @@ class MkdirTest extends DeleteTmpAfterEachTest
 
     public function testMkdirDeepWithoutRecursive(): void
     {
-        $path = self::TMP_DIR . '/test/test/test';
+        $path = $this->tmpDir . '/test/test/test';
 
         $this->assertDirectoryDoesNotExist($path);
         $this->expectException(FileOrDirectoryNotFoundException::class);
@@ -29,11 +32,11 @@ class MkdirTest extends DeleteTmpAfterEachTest
 
     public function testMkdirOnFile(): void
     {
-        $path = self::TMP_DIR . '/test';
+        $path = $this->tmpDir . '/test';
         Filesystem::writeFile($path, 'test');
 
         $this->assertFileExists($path);
-        $this->expectException(NotAFileException::class);
+        $this->expectException(FileExistsException::class);
         Filesystem::mkdir($path);
     }
 }

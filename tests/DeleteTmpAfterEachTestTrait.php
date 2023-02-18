@@ -3,16 +3,15 @@
 namespace Okapi\Filesystem\Tests;
 
 use Okapi\Filesystem\Filesystem;
-use PHPUnit\Framework\TestCase;
 
-abstract class DeleteTmpAfterEachTest extends TestCase
+trait DeleteTmpAfterEachTestTrait
 {
-    public const TMP_DIR = __DIR__ . '/tmp';
+    public string $tmpDir = __DIR__ . '/tmp';
 
     protected function tearDown(): void
     {
         Filesystem::rm(
-            self::TMP_DIR,
+            $this->tmpDir,
             recursive: true,
             force: true,
         );

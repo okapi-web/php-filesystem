@@ -3,6 +3,7 @@
 namespace Okapi\Filesystem;
 
 use Okapi\Filesystem\Exception\DirectoryNotEmptyException;
+use Okapi\Filesystem\Exception\FileExistsException;
 use Okapi\Filesystem\Exception\FileOrDirectoryNotWritableException;
 use Okapi\Filesystem\Exception\FileNotFoundException;
 use Okapi\Filesystem\Exception\FileOrDirectoryNotFoundException;
@@ -37,14 +38,14 @@ class Filesystem
         // Create parent directory if it does not exist
         $parentDir = dirname($path);
         if (!is_dir($parentDir)) {
-            self::mkdir($parentDir, $fileMode, true);
+            self::mkdir($parentDir, 0777, true);
         }
 
         // Create file
         file_put_contents($path, $content, LOCK_EX);
 
-        // No "execute" permission for files
-        chmod($path, $fileMode & ~0111);
+        // Set file mode
+        chmod($path, $fileMode);
     }
 
     /**
@@ -138,11 +139,11 @@ class Filesystem
         }
 
         if (is_file($path)) {
-            throw new NotAFileException($path);
+            throw new FileExistsException($path);
         }
 
         if (!is_dir($path)) {
-            mkdir($path, $mode, $recursive);
+            mkdir($path, 0777, $recursive);
         }
 
         chmod($path, $mode);

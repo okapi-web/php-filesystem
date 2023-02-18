@@ -5,13 +5,16 @@ namespace Okapi\Filesystem\Tests\Unit;
 use Okapi\Filesystem\Exception\FileNotFoundException;
 use Okapi\Filesystem\Exception\NotAFileException;
 use Okapi\Filesystem\Filesystem;
-use Okapi\Filesystem\Tests\DeleteTmpAfterEachTest;
+use Okapi\Filesystem\Tests\DeleteTmpAfterEachTestTrait;
+use PHPUnit\Framework\TestCase;
 
-class WriteAndReadFileTest extends DeleteTmpAfterEachTest
+class WriteAndReadFileTest extends TestCase
 {
+    use DeleteTmpAfterEachTestTrait;
+
     public function testWriteAndReadFile(): void
     {
-        $file = self::TMP_DIR . '/test.txt';
+        $file = $this->tmpDir . '/test.txt';
         $content = 'Hello world!';
 
         $this->assertFileDoesNotExist($file);
@@ -24,7 +27,7 @@ class WriteAndReadFileTest extends DeleteTmpAfterEachTest
 
     public function testWriteFileOnDirectory(): void
     {
-        $directory = self::TMP_DIR . '/test';
+        $directory = $this->tmpDir . '/test';
 
         $this->assertDirectoryDoesNotExist($directory);
         Filesystem::mkdir($directory, recursive: true);
@@ -36,7 +39,7 @@ class WriteAndReadFileTest extends DeleteTmpAfterEachTest
 
     public function testWriteFileDeepAndReadFile(): void
     {
-        $file = self::TMP_DIR . '/deep/test.txt';
+        $file = $this->tmpDir . '/deep/test.txt';
         $content = 'Hello world!';
 
         $this->assertFileDoesNotExist($file);
@@ -50,37 +53,41 @@ class WriteAndReadFileTest extends DeleteTmpAfterEachTest
         $this->assertEquals($content, $fileContent);
     }
 
-    public function testWriteFileWithFileMode0777(): void
+    public function testWriteFileWithFileMode0666(): void
     {
-        $this->writeFileWithFileMode(0777);
+        $this->writeFileWithFileMode(0666);
     }
 
-    public function testWriteFileWithFileMode0400(): void
+    public function testWriteFileWithFileMode0444(): void
     {
-        $this->writeFileWithFileMode(0400);
+        $this->writeFileWithFileMode(0444);
     }
 
     private function writeFileWithFileMode(int $fileMode): void
     {
-        $file = self::TMP_DIR . '/test.txt';
+        $file = $this->tmpDir . '/test.txt';
         $content = 'Hello world!';
 
         $this->assertFileDoesNotExist($file);
-
         Filesystem::writeFile($file, $content, $fileMode);
-
         $this->assertFileExists($file);
 
-        $fileContent = file_get_contents($file);
-
+        $fileContent = Filesystem::readFile($file);
         $this->assertEquals($content, $fileContent);
 
-        $this->assertEquals($fileMode & ~0111, fileperms($file) & $fileMode);
+        $actualFileMode = fileperms($file);
+        if (PHP_OS === 'Linux') {
+            $actualFileMode = $actualFileMode & 0666;
+        } else {
+            $actualFileMode = $actualFileMode & 0777;
+        }
+
+        $this->assertEquals($fileMode, $actualFileMode);
     }
 
     public function testReadFileOnDirectory(): void
     {
-        $directory = self::TMP_DIR . '/test';
+        $directory = $this->tmpDir . '/test';
 
         $this->assertDirectoryDoesNotExist($directory);
         Filesystem::mkdir($directory, recursive: true);
@@ -92,7 +99,7 @@ class WriteAndReadFileTest extends DeleteTmpAfterEachTest
 
     public function testReadFileOnNonExistentDirectory(): void
     {
-        $directory = self::TMP_DIR . '/test';
+        $directory = $this->tmpDir . '/test';
 
         $this->assertDirectoryDoesNotExist($directory);
 
